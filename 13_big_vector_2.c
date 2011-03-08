@@ -7,10 +7,12 @@
 #include <stdlib.h>
 #include "mpi.h"
 
-#define BLOCK_CNT   1024
-#define BLOCK_LEN   1024
-#define STRIDE_LEN  (4096)
 
+#define TRUE        1
+#define FALSE       0
+
+#define ABORTME()     MPI_Abort(MPI_COMM_WORLD,1)
+#define USAGE()       printf("Usage: %s -c -f filename -b blockCount -l blockLength -s strideLength  \n",argv[0])
 int rank, size;
 
 int main (argc, argv)
@@ -24,15 +26,76 @@ int main (argc, argv)
     int ret;
     MPI_Datatype vec_type;
 
+    int createfile = FALSE;
+    int BLOCK_CNT =  1024;
+    int BLOCK_LEN =  1024;
+    int STRIDE_LEN = 4096;
+    char *filename = NULL;
+    extern char *optarg;
+    int c;
+
+
     MPI_Init (&argc, &argv);	/* starts MPI */
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);	/* get current process id */
     MPI_Comm_size (MPI_COMM_WORLD, &size);	/* get number of processes */
 
+    while ((c = getopt(argc, argv, "c:f:b:l:s")) != EOF) {
+        switch(c) {
+            case 'c':
+                createfile = TRUE;
+                printf("Will create file\n");
+                break;
+            case 'f':
+                filename = optarg;
+                printf("Filename %s\n", filename);
+                break;
+            case 'b':
+                /* block count */
+                if ( sscanf( optarg, "%d", &BLOCK_CNT) != 1 ) {
+                    USAGE();
+                    printf("1--------------");
+                    ABORTME();
+                }
+                break;
+            case 'l':
+                /* block length */
+                if ( sscanf( optarg, "%d", &BLOCK_LEN) != 1 ) {
+                    USAGE();
+                    printf("2--------------");
+                    ABORTME();
+                }
+                break;
+            case 's':
+                /* stride length */
+                if ( sscanf( optarg, "%d", &STRIDE_LEN) != 1 ) {
+                    USAGE();
+                    printf("3----------");
+                    ABORTME();
+                }
+                break;
+            default:
+                break;
+        }
+    }       
+    if ( filename == NULL ) {
+        USAGE();
+        printf("4----------");
+        ABORTME();
+    }
+    
+    printf("BLOCK_CNT:%d\n", BLOCK_CNT);
+    printf("BLOCK_LEN:%d\n", BLOCK_LEN);
+    printf("STRIDE_LEN:%d\n", STRIDE_LEN);
+
+
+
+
+
     /* This is a collective call, which means every process does the same thing, opens the same file */
-    ret = MPI_File_open( MPI_COMM_WORLD, "/tmp/hellovirginfile2", MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh );
+    ret = MPI_File_open( MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh );
     if ( ret != MPI_SUCCESS ) {
         printf("Failed to open file");
-        goto final;
+        ABORTME();
     }
     
 
@@ -41,7 +104,7 @@ int main (argc, argv)
 
     
     /* write to file */
-    if ( argc > 1 && (strcmp(argv[1], "createfile") == 0) ) {
+    if ( createfile == TRUE ) {
         printf( "Create file...\n" );
         junk = malloc ( STRIDE_LEN  );
         for ( i = 0 ; i < STRIDE_LEN ; i++ ) {
@@ -51,7 +114,7 @@ int main (argc, argv)
             ret = MPI_File_write( fh, junk, STRIDE_LEN, MPI_CHAR, &status);
             if ( ret != MPI_SUCCESS ) {
                 printf("failed to write file\n");
-                goto final;
+                ABORTME();
             }
         }
         free(junk);
@@ -69,7 +132,7 @@ int main (argc, argv)
     char *buffer = malloc (readsize);
     if (buffer == NULL) {
         printf("Can't allocate memory for buffer.\n");
-        goto final;
+        ABORTME();
     }
 
     
@@ -80,7 +143,7 @@ int main (argc, argv)
 
     if ( ret != MPI_SUCCESS ) {
         printf("File read failed\n");
-        goto final;
+        ABORTME();
     } else {
         printf( "Read success. Bandwidth:%lf\n", readsize/(total*1024*1024) );
     }
