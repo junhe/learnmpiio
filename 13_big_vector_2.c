@@ -39,7 +39,7 @@ int main (argc, argv)
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);	/* get current process id */
     MPI_Comm_size (MPI_COMM_WORLD, &size);	/* get number of processes */
 
-    while ((c = getopt(argc, argv, "c:f:b:l:s")) != EOF) {
+    while ((c = getopt(argc, argv, "f:b:l:s:c")) != EOF) {
         switch(c) {
             case 'c':
                 createfile = TRUE;
