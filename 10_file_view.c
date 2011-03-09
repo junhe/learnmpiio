@@ -47,9 +47,9 @@ int main (argc, argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
 
-    int sizes[2] = {ROW_S,COL_S}; // big array has sizes[0] rows and size[1] column
-    int subsizes[2] = {2,2};
-    int starts[2] = {0,0};
+    int sizes[2] = {ROW_S,COL_S}; // big array has sizes[0] rows and size[1] columns
+    int subsizes[2] = {3,2};  //subarray has subsizes[0] rows and subsizes[1] columns
+    int starts[2] = {2,0};    //subarray starts at row starts[0] and column starts[1]
     MPI_Type_create_subarray( 2, sizes, subsizes, starts, MPI_ORDER_C, MPI_CHAR, &sb_arr );
     MPI_Type_commit(&sb_arr);
 
@@ -62,7 +62,9 @@ int main (argc, argv)
     rank_char[1]='2';
     rank_char[2]='3';
     rank_char[3]='4';
-    MPI_File_write( fh, rank_char, 4, MPI_CHAR, &status);
+    rank_char[4]='5';
+    rank_char[5]='6';
+    MPI_File_write( fh, rank_char, 6, MPI_CHAR, &status);
 
     //printf( "I am rank %d. I read %s from the file.\n", rank, rank_char );
 
