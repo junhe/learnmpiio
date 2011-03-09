@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include "mpi.h"
 
+#define ROW_S 8
+#define COL_S 2
 
 int rank, size;
 
@@ -17,7 +19,7 @@ int main (argc, argv)
     MPI_File fh;
     MPI_Status status;
     char rank_char[128];
-    char junk[4][4] = {'a','b','c','d','e','f','g','h','i', 'j', 'k', 'l', 'm', 'n', 'o','p'};
+    char junk[ROW_S][COL_S] = {'a','b','c','d','e','f','g','h','i', 'j', 'k', 'l', 'm', 'n', 'o','p'};
     int i,j;
     MPI_Datatype sb_arr;
 
@@ -31,8 +33,8 @@ int main (argc, argv)
     
     /* print out the array and write to file */
     if ( rank == 0 ) {
-        for ( i = 0; i < 4 ; i++ ) {
-            for ( j = 0; j < 4; j++ ) {
+        for ( i = 0; i < ROW_S ; i++ ) {
+            for ( j = 0; j < COL_S; j++ ) {
                 printf("%c ", junk[i][j]);
                 MPI_File_write( fh, "0", 1, MPI_CHAR, &status);
             }
@@ -45,9 +47,9 @@ int main (argc, argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
 
-    int sizes[2] = {4,4};
+    int sizes[2] = {ROW_S,COL_S}; // big array has sizes[0] rows and size[1] column
     int subsizes[2] = {2,2};
-    int starts[2] = {1,2};
+    int starts[2] = {0,0};
     MPI_Type_create_subarray( 2, sizes, subsizes, starts, MPI_ORDER_C, MPI_CHAR, &sb_arr );
     MPI_Type_commit(&sb_arr);
 
