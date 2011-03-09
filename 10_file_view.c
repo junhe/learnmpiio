@@ -16,8 +16,8 @@ int main (argc, argv)
 {
     MPI_File fh;
     MPI_Status status;
-    char rank_char;
-    char junk[3][3] = {'0','1','2','3','4','5','6','7','8'};
+    char rank_char[128];
+    char junk[4][4] = {'a','b','c','d','e','f','g','h','i', 'j', 'k', 'l', 'm', 'n', 'o','p'};
     int i,j;
     MPI_Datatype sb_arr;
 
@@ -31,31 +31,38 @@ int main (argc, argv)
     
     /* print out the array and write to file */
     if ( rank == 0 ) {
-        for ( i = 0; i < 3 ; i++ ) {
-            for ( j = 0; j < 3; j++ ) {
+        for ( i = 0; i < 4 ; i++ ) {
+            for ( j = 0; j < 4; j++ ) {
                 printf("%c ", junk[i][j]);
+                MPI_File_write( fh, "0", 1, MPI_CHAR, &status);
             }
             printf("\n");
         }
         
-        MPI_File_write( fh, junk, 9, MPI_CHAR, &status);
+        //MPI_File_write( fh, junk, 16, MPI_CHAR, &status);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
 
 
-    int sizes[2] = {3,3};
-    int subsizes[2] = {1,1};
-    int starts[2] = {rank,rank};
+    int sizes[2] = {4,4};
+    int subsizes[2] = {2,2};
+    int starts[2] = {1,2};
     MPI_Type_create_subarray( 2, sizes, subsizes, starts, MPI_ORDER_C, MPI_CHAR, &sb_arr );
     MPI_Type_commit(&sb_arr);
 
     
     MPI_File_set_view(fh, 0, MPI_CHAR, sb_arr, "native", MPI_INFO_NULL);
     
-    MPI_File_read( fh, &rank_char, 1, MPI_CHAR, &status);
+    //MPI_File_read( fh, rank_char, 4, MPI_CHAR, &status);
+    rank_char[4] = '\0';
+    rank_char[0]='1';
+    rank_char[1]='2';
+    rank_char[2]='3';
+    rank_char[3]='4';
+    MPI_File_write( fh, rank_char, 4, MPI_CHAR, &status);
 
-    printf( "I am rank %d. I read %c from the file.\n", rank, rank_char );
+    //printf( "I am rank %d. I read %s from the file.\n", rank, rank_char );
 
     MPI_File_close(&fh);
 
